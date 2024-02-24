@@ -16,6 +16,58 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = sqliteTableCreator((name) => `vektor_${name}`);
 
+export const series = createTable("series", {
+  id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 256 }),
+  synopsis: text("synopsis", { mode: "json" }),
+  episodes: int("episodes", { mode: "number" }),
+  image: text("image", { length: 255 }),
+  createdAt: int("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: int("updatedAt", { mode: "timestamp" }),
+});
+
+export const studios = createTable("studios", {
+  id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 256 }),
+  description: text("description", { mode: "json" }),
+  established: text("established", { mode: "text" }),
+  createdAt: int("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: int("updatedAt", { mode: "timestamp" }),
+});
+
+export const seriesToStudios = createTable(
+  "series_to_studios",
+  {
+    serieId: int("series_id")
+      .notNull()
+      .references(() => series.id),
+    studioId: int("studio_id")
+      .notNull()
+      .references(() => studios.id),
+  },
+  (t) => ({
+    pk: primaryKey(t.serieId, t.studioId),
+  }),
+);
+
+export const seriesToStudiosRelations = relations(
+  seriesToStudios,
+  ({ one }) => ({
+    studios: one(series, {
+      fields: [seriesToStudios.studioId],
+      references: [series.id],
+    }),
+    series: one(studios, {
+      fields: [seriesToStudios.serieId],
+      references: [studios.id],
+    }),
+  }),
+);
+
 export const posts = createTable(
   "post",
   {
@@ -32,7 +84,7 @@ export const posts = createTable(
   (example) => ({
     createdByIdIdx: index("createdById_idx").on(example.createdById),
     nameIndex: index("name_idx").on(example.name),
-  })
+  }),
 );
 
 export const users = createTable("user", {
@@ -73,7 +125,7 @@ export const accounts = createTable(
       columns: [account.provider, account.providerAccountId],
     }),
     userIdIdx: index("account_userId_idx").on(account.userId),
-  })
+  }),
 );
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -91,7 +143,7 @@ export const sessions = createTable(
   },
   (session) => ({
     userIdIdx: index("session_userId_idx").on(session.userId),
-  })
+  }),
 );
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -107,5 +159,5 @@ export const verificationTokens = createTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  })
+  }),
 );
