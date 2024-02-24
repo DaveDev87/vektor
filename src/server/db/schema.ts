@@ -32,6 +32,7 @@ export const studios = createTable("studios", {
   id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   name: text("name", { length: 256 }),
   description: text("description", { mode: "json" }),
+  image: text("image", { mode: "text" }),
   established: text("established", { mode: "text" }),
   createdAt: int("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
